@@ -45,15 +45,18 @@ export default function RootLayout() {
   // Biometric lock on app open
   useEffect(() => {
     if (!user || !biometricLock) return;
+    let active = true;
     LocalAuthentication.authenticateAsync({
       promptMessage: "Unlock FinanceFlow",
       fallbackLabel: "Use Passcode",
     }).then((result) => {
+      if (!active) return;
       if (!result.success) {
         useAuthStore.getState().signOut();
         router.replace("/auth/login");
       }
     });
+    return () => { active = false; };
   }, [user?.uid, biometricLock]);
 
   // Register push notifications + schedule monthly report
