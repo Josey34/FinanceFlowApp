@@ -69,7 +69,7 @@ export default function TransferModal() {
   }
 
   return (
-    <ThemedScreen>
+    <ThemedScreen modal>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
           <TouchableOpacity onPress={() => router.back()}>

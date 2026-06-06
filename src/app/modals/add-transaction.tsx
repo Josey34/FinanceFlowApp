@@ -268,7 +268,7 @@ export default function AddTransactionModal() {
       style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <SafeAreaView style={styles.safe} edges={["top"]}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
         {/* Header */}
         <View
           style={[

@@ -4,12 +4,16 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Props {
   children: React.ReactNode;
+  modal?: boolean;
 }
 
-export default function ThemedScreen({ children }: Readonly<Props>) {
+export default function ThemedScreen({ children, modal }: Readonly<Props>) {
   const { background } = useThemeColors();
   return (
-    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: background }]}>
+    <SafeAreaView
+      edges={modal ? ['top', 'bottom'] : ['top']}
+      style={[styles.safe, { backgroundColor: background }]}
+    >
       {children}
     </SafeAreaView>
   );
