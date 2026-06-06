@@ -5,7 +5,7 @@ import { useAccountStore } from "@/store/accountStore";
 import { useCategoryStore } from "@/store/categoryStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useTransactionStore } from "@/store/transactionStore";
-import { getCurrencySymbol } from "@/utils/formatCurrency";
+import { getCurrencySymbol, LOCALE_MAP } from "@/utils/formatCurrency";
 import { RecurrenceFrequency, TransactionType } from "@/types";
 import { todayStr } from "@/utils/formatDate";
 import { getSafeIoniconName } from "@/utils/icon";
@@ -173,9 +173,18 @@ export default function AddTransactionModal() {
   const [type, setType] = useState<TransactionType>(
     existing?.type ?? "expense",
   );
-  const [amount, setAmount] = useState(
+  // rawAmount stores digits only; displayAmount formats with locale thousands separator
+  const [rawAmount, setRawAmount] = useState(
     existing ? Math.abs(existing.amount).toString() : "",
   );
+  const locale = LOCALE_MAP[currency] ?? 'en-US';
+  const displayAmount = rawAmount
+    ? new Intl.NumberFormat(locale).format(Number(rawAmount))
+    : '';
+  const amountFontSize = Math.max(22, 48 - Math.max(0, displayAmount.length - 5) * 3);
+  function handleAmountChange(text: string) {
+    setRawAmount(text.replace(/[^0-9]/g, ''));
+  }
   const [note, setNote] = useState(existing?.note ?? "");
   const [merchant, setMerchant] = useState(existing?.merchant ?? "");
   const [selectedCat, setSelectedCat] = useState(
@@ -201,7 +210,7 @@ export default function AddTransactionModal() {
   }
 
   async function handleSave() {
-    const parsed = Number.parseFloat(amount.replaceAll(",", ""));
+    const parsed = Number.parseFloat(rawAmount);
     if (Number.isNaN(parsed) || parsed <= 0) {
       showError("Enter a valid amount");
       return;
@@ -341,12 +350,12 @@ export default function AddTransactionModal() {
               {currencySymbol}
             </Text>
             <TextInput
-              style={[styles.amountInput, { color: theme.text }]}
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0.00"
+              style={[styles.amountInput, { color: theme.text, fontSize: amountFontSize }]}
+              value={displayAmount}
+              onChangeText={handleAmountChange}
+              placeholder="0"
               placeholderTextColor={theme.textSecondary}
-              keyboardType="decimal-pad"
+              keyboardType="number-pad"
               autoFocus
             />
           </View>
@@ -652,10 +661,9 @@ const styles = StyleSheet.create({
     marginRight: Spacing.one,
   },
   amountInput: {
-    fontSize: 48,
     fontWeight: "700",
-    color: Colors.textPrimary,
-    minWidth: 100,
+    minWidth: 80,
+    flexShrink: 1,
     textAlign: "center",
   },
   field: { gap: Spacing.one },

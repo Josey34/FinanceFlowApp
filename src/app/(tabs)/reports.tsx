@@ -275,51 +275,18 @@ export default function ReportsScreen() {
         {/* Summary row */}
         <View style={[styles.summaryRow, { backgroundColor: theme.card }]}>
           {[
-            {
-              label: "Income",
-              value: format(totalSalary),
-              icon: "arrow-down" as const,
-              color: Colors.success,
-            },
-            {
-              label: "Expenses",
-              value: format(totalExpenses),
-              icon: "arrow-up" as const,
-              color: Colors.danger,
-            },
-            {
-              label: "Net",
-              value: format(net),
-              icon: "wallet-outline" as const,
-              color: net >= 0 ? Colors.success : Colors.danger,
-            },
+            { label: "Income",   value: format(totalSalary),   icon: "arrow-down" as const,     color: Colors.success },
+            { label: "Expenses", value: format(totalExpenses), icon: "arrow-up" as const,       color: Colors.danger },
+            { label: "Net",      value: format(net),           icon: "wallet-outline" as const, color: net >= 0 ? Colors.success : Colors.danger },
           ].map((item, i) => (
-            <View key={item.label} style={styles.summaryItem}>
-              {i > 0 && (
-                <View
-                  style={[
-                    styles.summaryDivider,
-                    { backgroundColor: theme.border },
-                  ]}
-                />
-              )}
-              <View
-                style={[
-                  styles.summaryIcon,
-                  { backgroundColor: item.color + "20" },
-                ]}
-              >
-                <Ionicons name={item.icon} size={16} color={item.color} />
-              </View>
-              <View>
-                <Text
-                  style={[styles.summaryLabel, { color: theme.textSecondary }]}
-                >
-                  {item.label}
-                </Text>
-                <Text style={[styles.summaryValue, { color: item.color }]}>
-                  {item.value}
-                </Text>
+            <View key={item.label}>
+              {i > 0 && <View style={[styles.summaryDivider, { backgroundColor: theme.border }]} />}
+              <View style={styles.summaryItem}>
+                <View style={[styles.summaryIcon, { backgroundColor: item.color + "20" }]}>
+                  <Ionicons name={item.icon} size={18} color={item.color} />
+                </View>
+                <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>{item.label}</Text>
+                <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
               </View>
             </View>
           ))}
@@ -715,10 +682,10 @@ const styles = StyleSheet.create({
   progressDot: { width: 8, height: 8, borderRadius: 4 },
   progressPct: { fontSize: 12, fontWeight: "600" },
   summaryRow: {
-    flexDirection: "row",
+    flexDirection: "column",
     marginHorizontal: Spacing.three,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.three,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -726,24 +693,25 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   summaryItem: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    gap: Spacing.three,
   },
   summaryDivider: {
-    width: 1,
-    marginHorizontal: Spacing.two,
+    height: 1,
+    marginHorizontal: Spacing.three,
   },
   summaryIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
-  summaryLabel: { fontSize: 11 },
-  summaryValue: { fontSize: 13, fontWeight: "700" },
+  summaryLabel: { fontSize: 13, flex: 1 },
+  summaryValue: { fontSize: 15, fontWeight: "700" },
   section: { paddingHorizontal: Spacing.three, gap: Spacing.two },
   sectionTitle: { fontSize: 16, fontWeight: "700" },
   aiBtn: {

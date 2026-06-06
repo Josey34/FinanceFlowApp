@@ -1,7 +1,7 @@
 import { useSettingsStore } from '../store/settingsStore';
 
 // Currency → locale for correct thousands/decimal separators
-const LOCALE_MAP: Record<string, string> = {
+export const LOCALE_MAP: Record<string, string> = {
   USD: 'en-US', AUD: 'en-AU', CAD: 'en-CA', NZD: 'en-NZ',
   GBP: 'en-GB', SGD: 'en-SG', HKD: 'en-HK',
   EUR: 'de-DE', CHF: 'de-CH',

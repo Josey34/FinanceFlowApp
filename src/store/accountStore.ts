@@ -14,7 +14,6 @@ interface AccountState {
   addAccount: (account: Omit<Account, "id">) => Promise<void>;
   updateAccount: (id: string, updates: Partial<Account>) => Promise<void>;
   deleteAccount: (id: string) => Promise<void>;
-  getTotalBalance: () => number;
 }
 
 export const useAccountStore = create<AccountState>((set, get) => ({
@@ -40,6 +39,4 @@ export const useAccountStore = create<AccountState>((set, get) => ({
     if (!userId) return;
     await fsDelete(userId, id);
   },
-
-  getTotalBalance: () => get().accounts.reduce((sum, a) => sum + a.balance, 0),
 }));

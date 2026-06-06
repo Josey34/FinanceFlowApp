@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+﻿import { useState, useCallback, useMemo } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -21,7 +21,6 @@ import { prevMonth } from '@/utils/formatDate';
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const { transactions } = useTransactionStore();
-  const { getTotalBalance } = useAccountStore();
   const { categories } = useCategoryStore();
   const { selectedMonth } = useSettingsStore();
   const theme = useThemeColors();
@@ -38,7 +37,10 @@ export default function HomeScreen() {
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
 
   const { accounts } = useAccountStore();
-  const balance = getTotalBalance();
+  const balance = useMemo(
+    () => transactions.reduce((sum, t) => sum + t.amount, 0),
+    [transactions],
+  );
   const monthlyIncome = getTotalIncome(transactions, selectedMonth);
   const monthlyExpenses = getTotalExpenses(transactions, selectedMonth);
   const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 : 0;

@@ -38,7 +38,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   addTransaction: async (tx) => {
     const { userId } = get();
     if (!userId) return;
-    await fsAdd(userId, tx); // real-time listener updates local state
+    await fsAdd(userId, tx);
   },
 
   updateTransaction: async (id, updates) => {

@@ -21,7 +21,7 @@ export default function TransferModal() {
   const { format } = useCurrency();
   const { currency } = useSettingsStore();
   const currencySymbol = getCurrencySymbol(currency);
-  const { accounts, updateAccount } = useAccountStore();
+  const { accounts } = useAccountStore();
   const { addTransaction } = useTransactionStore();
   const [fromId, setFromId] = useState(accounts[0]?.id ?? '');
   const [toId, setToId] = useState(accounts[1]?.id ?? '');
@@ -42,9 +42,6 @@ export default function TransferModal() {
     }
 
     try {
-      await updateAccount(fromId, { balance: from.balance - parsed });
-      await updateAccount(toId, { balance: to.balance + parsed });
-
       const today = todayStr();
       await addTransaction({
         merchant: `Transfer to ${to.name}`,
