@@ -5,8 +5,6 @@ import {
   updateAccount as fsUpdate,
 } from "../services/accounts";
 import { Account } from "../types";
-import { uid } from "../utils/uid";
-
 
 interface AccountState {
   accounts: Account[];
@@ -19,7 +17,6 @@ interface AccountState {
   getTotalBalance: () => number;
 }
 
-
 export const useAccountStore = create<AccountState>((set, get) => ({
   accounts: [],
   userId: null,
@@ -28,31 +25,20 @@ export const useAccountStore = create<AccountState>((set, get) => ({
 
   addAccount: async (account) => {
     const { userId } = get();
-    if (userId) {
-      await fsAdd(userId, account);
-      return;
-    }
-    set((s) => ({ accounts: [...s.accounts, { ...account, id: uid() }] }));
+    if (!userId) return;
+    await fsAdd(userId, account);
   },
 
   updateAccount: async (id, updates) => {
     const { userId } = get();
-    if (userId) {
-      await fsUpdate(userId, id, updates);
-      return;
-    }
-    set((s) => ({
-      accounts: s.accounts.map((a) => (a.id === id ? { ...a, ...updates } : a)),
-    }));
+    if (!userId) return;
+    await fsUpdate(userId, id, updates);
   },
 
   deleteAccount: async (id) => {
     const { userId } = get();
-    if (userId) {
-      await fsDelete(userId, id);
-      return;
-    }
-    set((s) => ({ accounts: s.accounts.filter((a) => a.id !== id) }));
+    if (!userId) return;
+    await fsDelete(userId, id);
   },
 
   getTotalBalance: () => get().accounts.reduce((sum, a) => sum + a.balance, 0),

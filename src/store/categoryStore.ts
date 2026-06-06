@@ -118,38 +118,21 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
 
   addCategory: async (cat) => {
     const { userId } = get();
-    if (userId) {
-      const { spent: _spent, ...catWithoutSpent } = cat;
-      await fsAdd(userId, catWithoutSpent);
-      return;
-    }
-    set((s) => ({ categories: [...s.categories, cat] }));
+    if (!userId) return;
+    const { spent: _spent, ...catWithoutSpent } = cat;
+    await fsAdd(userId, catWithoutSpent);
   },
 
   updateCategory: async (id, updates) => {
     const { userId } = get();
-    if (userId) {
-      await fsUpdate(userId, id, updates);
-      return;
-    }
-    set((s) => ({
-      categories: s.categories.map((c) =>
-        c.id === id ? { ...c, ...updates } : c,
-      ),
-    }));
+    if (!userId) return;
+    await fsUpdate(userId, id, updates);
   },
 
   archiveCategory: async (id) => {
     const { userId } = get();
-    if (userId) {
-      await fsUpdate(userId, id, { archived: true });
-      return;
-    }
-    set((s) => ({
-      categories: s.categories.map((c) =>
-        c.id === id ? { ...c, archived: true } : c,
-      ),
-    }));
+    if (!userId) return;
+    await fsUpdate(userId, id, { archived: true });
   },
 
   updateSpent: (id, spent) =>

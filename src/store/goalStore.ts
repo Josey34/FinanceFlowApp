@@ -1,12 +1,10 @@
 import { create } from 'zustand';
-import { uid } from '../utils/uid';
 import { Goal } from '../types';
 import {
   addGoal as fsAdd,
   updateGoal as fsUpdate,
   deleteGoal as fsDelete,
 } from '../services/goals';
-
 
 interface GoalState {
   goals: Goal[];
@@ -26,29 +24,20 @@ export const useGoalStore = create<GoalState>((set, get) => ({
 
   addGoal: async (goal) => {
     const { userId } = get();
-    if (userId) {
-      await fsAdd(userId, goal);
-      return;
-    }
-    set((s) => ({ goals: [...s.goals, { ...goal, id: uid() }] }));
+    if (!userId) return;
+    await fsAdd(userId, goal);
   },
 
   updateGoal: async (id, updates) => {
     const { userId } = get();
-    if (userId) {
-      await fsUpdate(userId, id, updates);
-      return;
-    }
-    set((s) => ({ goals: s.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)) }));
+    if (!userId) return;
+    await fsUpdate(userId, id, updates);
   },
 
   deleteGoal: async (id) => {
     const { userId } = get();
-    if (userId) {
-      await fsDelete(userId, id);
-      return;
-    }
-    set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
+    if (!userId) return;
+    await fsDelete(userId, id);
   },
 
   contributeToGoal: async (id, amount) => {

@@ -39,7 +39,7 @@ export function useSyncSettings(userId: string | null) {
 
   // Subscribe to Firestore settings on login; restore them to store.
   useEffect(() => {
-    if (!userId || userId === 'dev') { loaded.current = false; return; }
+    if (!userId) { loaded.current = false; return; }
     const unsub = subscribeToSettings(userId, (prefs, exists) => {
       if (exists) applyRemoteSettings(prefs);
       loaded.current = true;
@@ -49,7 +49,7 @@ export function useSyncSettings(userId: string | null) {
 
   // Save settings to Firestore whenever they change (only after initial load).
   useEffect(() => {
-    if (!userId || userId === 'dev' || !loaded.current) return;
+    if (!userId || !loaded.current) return;
     saveSettings(userId, {
       currency, theme, notifications, biometricLock,
       weekStartsOn, budgetRollover, billReminders, billReminderDays, weeklyDigest,

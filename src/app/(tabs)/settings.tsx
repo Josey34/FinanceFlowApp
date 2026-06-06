@@ -221,7 +221,7 @@ export default function SettingsScreen() {
       confirmLabel: 'Sign Out',
       destructive: true,
       onConfirm: async () => {
-        try { await signOut(); } catch { /* demo mode */ }
+        await signOut();
         useAuthStore.getState().signOut();
         router.replace('/auth/login');
       },

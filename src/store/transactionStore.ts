@@ -1,13 +1,11 @@
 import { create } from 'zustand';
 import { Transaction, TransactionType } from '../types';
 import { getYearMonth } from '../utils/formatDate';
-import { uid } from '../utils/uid';
 import {
   addTransaction as fsAdd,
   updateTransaction as fsUpdate,
   deleteTransaction as fsDelete,
 } from '../services/transactions';
-
 
 interface TransactionState {
   transactions: Transaction[];
@@ -39,34 +37,20 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
 
   addTransaction: async (tx) => {
     const { userId } = get();
-    if (userId) {
-      await fsAdd(userId, tx); // throws on failure — caller handles with showError
-      return; // real-time listener updates local state
-    }
-    // Demo mode only
-    const createdAt = new Date().toISOString().split('T')[0];
-    const id = uid();
-    set((s) => ({ transactions: [{ ...tx, id, createdAt }, ...s.transactions] }));
+    if (!userId) return;
+    await fsAdd(userId, tx); // real-time listener updates local state
   },
 
   updateTransaction: async (id, updates) => {
     const { userId } = get();
-    if (userId) {
-      await fsUpdate(userId, id, updates);
-      return;
-    }
-    set((s) => ({
-      transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-    }));
+    if (!userId) return;
+    await fsUpdate(userId, id, updates);
   },
 
   deleteTransaction: async (id) => {
     const { userId } = get();
-    if (userId) {
-      await fsDelete(userId, id);
-      return;
-    }
-    set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) }));
+    if (!userId) return;
+    await fsDelete(userId, id);
   },
 
   getMonthlyTransactions: (yearMonth) =>

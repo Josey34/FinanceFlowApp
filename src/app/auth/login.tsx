@@ -55,11 +55,6 @@ export default function LoginScreen() {
     }
   }
 
-  function handleDevBypass() {
-    setUser({ uid: 'dev', email: 'dev@financeflow.app', displayName: 'Dev User' });
-    router.replace('/(tabs)');
-  }
-
   return (
     <ThemedScreen>
       <KeyboardAvoidingView
@@ -126,10 +121,6 @@ export default function LoginScreen() {
                 </>}
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.devBtn, { borderColor: theme.border }]} onPress={handleDevBypass}>
-            <Text style={[styles.devBtnText, { color: theme.textSecondary }]}>Continue without account (Demo)</Text>
-          </TouchableOpacity>
-
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: theme.textSecondary }]}>Don&apos;t have an account? </Text>
             <Link href="/auth/register" asChild>
@@ -169,8 +160,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   googleBtnText: { fontSize: 15, fontWeight: '600' },
-  devBtn: { borderRadius: BorderRadius.md, paddingVertical: Spacing.two + 2, alignItems: 'center', borderWidth: 1 },
-  devBtnText: { fontSize: 14 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.two },
   footerText: { fontSize: 14 },
   footerLink: { color: Colors.primary, fontSize: 14, fontWeight: '700' },
