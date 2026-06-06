@@ -5,7 +5,6 @@ import {
   deleteDoc,
   doc,
   query,
-  where,
   orderBy,
   onSnapshot,
   Timestamp,
@@ -19,11 +18,11 @@ function txPath(userId: string) {
 }
 
 export async function addTransaction(userId: string, data: Omit<Transaction, 'id' | 'createdAt'>): Promise<string> {
-  const ref = await addDoc(txPath(userId), {
-    ...data,
-    createdAt: Timestamp.now(),
-    date: Timestamp.fromDate(new Date(data.date)),
-  });
+  const payload = Object.fromEntries(
+    Object.entries({ ...data, createdAt: Timestamp.now(), date: Timestamp.fromDate(new Date(data.date)) })
+      .filter(([, v]) => v !== undefined),
+  );
+  const ref = await addDoc(txPath(userId), payload);
   return ref.id;
 }
 

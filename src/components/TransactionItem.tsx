@@ -58,6 +58,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: Spacing.two + 2,
+    paddingHorizontal: Spacing.three,
     gap: Spacing.three,
   },
   iconWrapper: {

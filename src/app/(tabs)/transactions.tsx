@@ -30,6 +30,7 @@ function SwipeableRow({
   onEdit,
   children,
 }: Readonly<{ onDelete: () => void; onEdit: () => void; children: React.ReactNode }>) {
+  const theme = useThemeColors();
   const translateX = useRef(new Animated.Value(0)).current;
 
   const pan = useRef(
@@ -64,7 +65,7 @@ function SwipeableRow({
         <Ionicons name="trash" size={18} color={Colors.white} />
         <Text style={swipe.actionLabel}>Delete</Text>
       </View>
-      <Animated.View style={{ transform: [{ translateX }] }} {...pan.panHandlers}>
+      <Animated.View style={{ transform: [{ translateX }], backgroundColor: theme.card }} {...pan.panHandlers}>
         {children}
       </Animated.View>
     </View>
@@ -432,9 +433,9 @@ const styles = StyleSheet.create({
   sectionTotal: { fontSize: 12, fontWeight: '700' },
   cardWrapper: {
     borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.three,
     shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    overflow: 'hidden',
   },
   divider: { height: 1 },
   sectionGap: { height: Spacing.two },

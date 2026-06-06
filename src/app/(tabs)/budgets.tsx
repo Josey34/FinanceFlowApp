@@ -15,10 +15,13 @@ import {
 import { prevMonth } from "@/utils/formatDate";
 import { getSafeIoniconName } from "@/utils/icon";
 import { Ionicons } from "@expo/vector-icons";
+import { showConfirm } from "@/components/AppDialog";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Modal,
+  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
@@ -29,8 +32,70 @@ import {
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
+const SWIPE_THRESHOLD = 72;
+
+function SwipeableBudgetCard({
+  children,
+  onEdit,
+  onDelete,
+}: Readonly<{ children: React.ReactNode; onEdit: () => void; onDelete: () => void }>) {
+  const theme = useThemeColors();
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, { dx, dy }) =>
+        Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8,
+      onPanResponderMove: (_, { dx }) =>
+        translateX.setValue(Math.max(-110, Math.min(110, dx))),
+      onPanResponderRelease: (_, { dx }) => {
+        if (dx < -SWIPE_THRESHOLD) {
+          Animated.timing(translateX, { toValue: -500, duration: 200, useNativeDriver: true }).start(() => {
+            translateX.setValue(0);
+            onDelete();
+          });
+        } else if (dx > SWIPE_THRESHOLD) {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start(() => onEdit());
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
+
+  return (
+    <View style={swipe.container}>
+      <View style={swipe.leftAction}>
+        <Ionicons name="pencil" size={18} color="#fff" />
+        <Text style={swipe.label}>Edit</Text>
+      </View>
+      <View style={swipe.rightAction}>
+        <Ionicons name="trash" size={18} color="#fff" />
+        <Text style={swipe.label}>Delete</Text>
+      </View>
+      <Animated.View style={{ transform: [{ translateX }], backgroundColor: theme.card }} {...pan.panHandlers}>
+        {children}
+      </Animated.View>
+    </View>
+  );
+}
+
+const swipe = StyleSheet.create({
+  container: { position: "relative", overflow: "hidden", borderRadius: BorderRadius.lg },
+  leftAction: {
+    position: "absolute", left: 0, top: 0, bottom: 0, width: 80,
+    backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center", gap: 4,
+  },
+  rightAction: {
+    position: "absolute", right: 0, top: 0, bottom: 0, width: 80,
+    backgroundColor: Colors.danger, alignItems: "center", justifyContent: "center", gap: 4,
+  },
+  label: { color: "#fff", fontSize: 11, fontWeight: "700" },
+});
+
 export default function BudgetsScreen() {
-  const { categories } = useCategoryStore();
+  const { categories, archiveCategory } = useCategoryStore();
   const { getTotalByType, transactions } = useTransactionStore();
   const { notifications, budgetRollover, selectedMonth } = useSettingsStore();
   const theme = useThemeColors();
@@ -201,25 +266,29 @@ export default function BudgetsScreen() {
             Category Budgets
           </Text>
           {activeCategories.map((cat) => (
-            <TouchableOpacity
+            <SwipeableBudgetCard
               key={cat.id}
-              activeOpacity={0.85}
-              onPress={() =>
-                router.push(`/(tabs)/transactions?categoryId=${cat.id}`)
+              onEdit={() => handleEditLimit(cat.id, cat.name, cat.monthlyLimit ?? 0)}
+              onDelete={() =>
+                showConfirm({
+                  title: 'Remove Budget',
+                  message: `Remove budget limit for "${cat.name}"?`,
+                  confirmLabel: 'Remove',
+                  destructive: true,
+                  onConfirm: () => archiveCategory(cat.id),
+                })
               }
             >
-              <BudgetProgressCard
-                category={cat}
-                rolloverAmount={
-                  budgetRollover
-                    ? getRolloverAmount(cat, transactions, prevYM)
-                    : 0
-                }
-                onEdit={() =>
-                  handleEditLimit(cat.id, cat.name, cat.monthlyLimit ?? 0)
-                }
-              />
-            </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => router.push(`/(tabs)/transactions?categoryId=${cat.id}`)}
+              >
+                <BudgetProgressCard
+                  category={cat}
+                  rolloverAmount={budgetRollover ? getRolloverAmount(cat, transactions, prevYM) : 0}
+                />
+              </TouchableOpacity>
+            </SwipeableBudgetCard>
           ))}
         </View>
 

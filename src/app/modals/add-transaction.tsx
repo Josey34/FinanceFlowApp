@@ -221,7 +221,7 @@ export default function AddTransactionModal() {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    const recurrence = recurring ? { frequency, nextDate: date } : undefined;
+    const recurrence = recurring ? { frequency, nextDate: date } : null;
 
     try {
       if (existing) {

@@ -9,6 +9,8 @@ import { router } from 'expo-router';
 import { Colors, Spacing, BorderRadius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useGoalStore } from '@/store/goalStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { getCurrencySymbol } from '@/utils/formatCurrency';
 import { showError } from '@/utils/toast';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -21,6 +23,8 @@ const COLORS = [Colors.primary, Colors.secondary, Colors.success, '#FFD93D', '#B
 
 export default function AddGoalModal() {
   const theme = useThemeColors();
+  const { currency } = useSettingsStore();
+  const currencySymbol = getCurrencySymbol(currency);
   const [name, setName] = useState('');
   const [target, setTarget] = useState('');
   const [icon, setIcon] = useState<IoniconsName>('flag');
@@ -32,7 +36,7 @@ export default function AddGoalModal() {
     if (!name.trim()) { showError('Enter a goal name'); return; }
     if (Number.isNaN(parsed) || parsed <= 0) { showError('Enter a valid target amount'); return; }
     try {
-      await addGoal({ name: name.trim(), targetAmount: parsed, savedAmount: 0, currency: 'USD', deadline: null, icon, color, completed: false });
+      await addGoal({ name: name.trim(), targetAmount: parsed, savedAmount: 0, currency, deadline: null, icon, color, completed: false });
       router.back();
     } catch {
       showError('Failed to save. Check your connection and try again.');
@@ -63,7 +67,7 @@ export default function AddGoalModal() {
           </View>
 
           <View style={styles.field}>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Target Amount ($)</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Target Amount ({currencySymbol})</Text>
             <TextInput style={[styles.input, { backgroundColor: theme.input, color: theme.text, borderColor: theme.border }]} value={target} onChangeText={setTarget} placeholder="0.00" placeholderTextColor={theme.textSecondary} keyboardType="decimal-pad" />
           </View>
 
