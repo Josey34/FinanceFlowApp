@@ -32,7 +32,11 @@ export default function AddGoalModal() {
   const { addGoal } = useGoalStore();
 
   async function handleSave() {
-    const parsed = Number.parseFloat(target.replaceAll(',', ''));
+    const cleaned = target
+      .replace(/[^\d,.]/g, '')
+      .replace(/,([^,]*)$/, '.$1')
+      .replace(/[.,](?=.*[.,])/g, '');
+    const parsed = Number.parseFloat(cleaned);
     if (!name.trim()) { showError('Enter a goal name'); return; }
     if (Number.isNaN(parsed) || parsed <= 0) { showError('Enter a valid target amount'); return; }
     try {

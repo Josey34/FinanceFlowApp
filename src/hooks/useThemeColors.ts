@@ -42,6 +42,7 @@ export function useThemeColors(): ThemeColors {
     textSecondary: t.textSec,
     border:        t.border,
     primary:       t.primary,
+    secondary:     t.secondary,
     isDark:        t.isDark,
   };
 }

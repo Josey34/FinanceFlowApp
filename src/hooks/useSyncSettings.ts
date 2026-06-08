@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSettingsStore } from '../store/settingsStore';
 import { saveSettings, subscribeToSettings } from '../services/settings';
 import type { UserSettings } from '../types';
@@ -35,21 +35,21 @@ export function useSyncSettings(userId: string | null) {
 
   // Track whether remote settings have been loaded for current user.
   // Prevents overwriting Firestore with defaults before the snapshot arrives.
-  const loaded = useRef(false);
+  const [remoteLoaded, setRemoteLoaded] = useState(false);
 
   // Subscribe to Firestore settings on login; restore them to store.
   useEffect(() => {
-    if (!userId) { loaded.current = false; return; }
+    if (!userId) { setRemoteLoaded(false); return; }
     const unsub = subscribeToSettings(userId, (prefs, exists) => {
       if (exists) applyRemoteSettings(prefs);
-      loaded.current = true;
+      setRemoteLoaded(true);
     });
     return unsub;
   }, [userId]);
 
   // Save settings to Firestore whenever they change (only after initial load).
   useEffect(() => {
-    if (!userId || !loaded.current) return;
+    if (!userId || !remoteLoaded) return;
     saveSettings(userId, {
       currency, theme, notifications, biometricLock,
       weekStartsOn, budgetRollover, billReminders, billReminderDays, weeklyDigest,

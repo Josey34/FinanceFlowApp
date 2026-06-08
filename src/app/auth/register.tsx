@@ -45,8 +45,8 @@ export default function RegisterScreen() {
       const user = await registerUser(email.trim(), password, name.trim());
       setUser({ uid: user.uid, email: user.email, displayName: user.displayName });
       router.replace('/(tabs)');
-    } catch (err: any) {
-      showError(err.message ?? 'Registration failed — try again');
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : 'Registration failed — try again');
     } finally {
       setLoading(false);
     }

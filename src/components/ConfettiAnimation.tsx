@@ -12,14 +12,16 @@ interface Particle {
 }
 
 export default function ConfettiAnimation({ visible }: Readonly<{ visible: boolean }>) {
-  const particles = useRef<Particle[]>(
-    Array.from({ length: COUNT }, () => ({
+  const particlesRef = useRef<Particle[] | null>(null);
+  if (!particlesRef.current) {
+    particlesRef.current = Array.from({ length: COUNT }, () => ({
       x: new Animated.Value(0),
       y: new Animated.Value(0),
       opacity: new Animated.Value(0),
       rotate: new Animated.Value(0),
-    })),
-  ).current;
+    }));
+  }
+  const particles = particlesRef.current;
 
   useEffect(() => {
     if (!visible) return;
