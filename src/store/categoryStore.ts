@@ -119,8 +119,11 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   addCategory: async (cat) => {
     const { userId } = get();
     if (!userId) return;
-    const { spent: _spent, ...catWithoutSpent } = cat;
-    await fsAdd(userId, catWithoutSpent);
+    const { id: _id, spent: _spent, ...catWithoutId } = cat;
+    const newId = await fsAdd(userId, catWithoutId);
+    set((s) => ({
+      categories: [...s.categories, { ...catWithoutId, id: newId, spent: 0 }],
+    }));
   },
 
   updateCategory: async (id, updates) => {

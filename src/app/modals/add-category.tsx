@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { Colors, Spacing, BorderRadius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useCategoryStore } from '@/store/categoryStore';
+import { Category } from '@/types';
 import { showError } from '@/utils/toast';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -32,7 +33,6 @@ export default function AddCategoryModal() {
     if (!name.trim()) { showError('Enter a category name'); return; }
     try {
       await addCategory({
-        id: name.toLowerCase().replaceAll(/\s+/g, '_') + '_' + Date.now(),
         name: name.trim(),
         icon,
         color,
@@ -40,7 +40,7 @@ export default function AddCategoryModal() {
         isDefault: false,
         archived: false,
         spent: 0,
-      });
+      } as Category);
       router.back();
     } catch {
       showError('Failed to save. Check your connection and try again.');
