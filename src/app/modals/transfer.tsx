@@ -1,20 +1,26 @@
-import { useState } from 'react';
+import ThemedScreen from "@/components/ThemedScreen";
+import { BorderRadius, Colors, Spacing } from "@/constants/theme";
+import { useCurrency } from "@/hooks/useCurrency";
+import { useThemeColors } from "@/hooks/useThemeColors";
+import { useAccountStore } from "@/store/accountStore";
+import { useSettingsStore } from "@/store/settingsStore";
+import { useTransactionStore } from "@/store/transactionStore";
+import { getCurrencySymbol } from "@/utils/formatCurrency";
+import { todayStr } from "@/utils/formatDate";
+import { showError, showSuccess } from "@/utils/toast";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, KeyboardAvoidingView, Platform,
-} from 'react-native';
-import ThemedScreen from '@/components/ThemedScreen';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { Colors, Spacing, BorderRadius } from '@/constants/theme';
-import { useThemeColors } from '@/hooks/useThemeColors';
-import { useCurrency } from '@/hooks/useCurrency';
-import { useAccountStore } from '@/store/accountStore';
-import { useTransactionStore } from '@/store/transactionStore';
-import { todayStr } from '@/utils/formatDate';
-import { getCurrencySymbol } from '@/utils/formatCurrency';
-import { showError, showSuccess } from '@/utils/toast';
-import { useSettingsStore } from '@/store/settingsStore';
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 export default function TransferModal() {
   const theme = useThemeColors();
@@ -23,21 +29,30 @@ export default function TransferModal() {
   const currencySymbol = getCurrencySymbol(currency);
   const { accounts } = useAccountStore();
   const { addTransaction } = useTransactionStore();
-  const [fromId, setFromId] = useState(accounts[0]?.id ?? '');
-  const [toId, setToId] = useState(accounts[1]?.id ?? '');
-  const [amount, setAmount] = useState('');
+  const { updateAccount } = useAccountStore();
+  const [fromId, setFromId] = useState(accounts[0]?.id ?? "");
+  const [toId, setToId] = useState(accounts[1]?.id ?? "");
+  const [amount, setAmount] = useState("");
 
   async function handleTransfer() {
     const parsed = Number.parseFloat(amount);
-    if (Number.isNaN(parsed) || parsed <= 0) { showError('Enter a valid amount'); return; }
-    if (fromId === toId) { showError('Source and destination accounts must be different'); return; }
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      showError("Enter a valid amount");
+      return;
+    }
+    if (fromId === toId) {
+      showError("Source and destination accounts must be different");
+      return;
+    }
 
     const from = accounts.find((a) => a.id === fromId);
     const to = accounts.find((a) => a.id === toId);
     if (!from || !to) return;
 
     if (from.balance < parsed) {
-      showError(`Not enough funds — ${from.name} only has ${format(from.balance)}`);
+      showError(
+        `Not enough funds — ${from.name} only has ${format(from.balance)}`,
+      );
       return;
     }
 
@@ -45,43 +60,77 @@ export default function TransferModal() {
       const today = todayStr();
       await addTransaction({
         merchant: `Transfer to ${to.name}`,
-        amount: -parsed, type: 'expense',
-        categoryId: 'transfer', category: 'Transfer',
-        accountId: fromId, note: `Transfer to ${to.name}`,
-        tags: ['transfer'], date: today, icon: '🔄', iconBg: '#7C6FFF', recurring: false,
+        amount: -parsed,
+        type: "expense",
+        categoryId: "transfer",
+        category: "Transfer",
+        accountId: fromId,
+        note: `Transfer to ${to.name}`,
+        tags: ["transfer"],
+        date: today,
+        icon: "swap-horizontal",
+        iconBg: "#7C6FFF",
+        recurring: false,
       });
       await addTransaction({
         merchant: `Transfer from ${from.name}`,
-        amount: parsed, type: 'income',
-        categoryId: 'transfer', category: 'Transfer',
-        accountId: toId, note: `Transfer from ${from.name}`,
-        tags: ['transfer'], date: today, icon: '🔄', iconBg: '#2DC76D', recurring: false,
+        amount: parsed,
+        type: "income",
+        categoryId: "transfer",
+        category: "Transfer",
+        accountId: toId,
+        note: `Transfer from ${from.name}`,
+        tags: ["transfer"],
+        date: today,
+        icon: "swap-horizontal",
+        iconBg: "#2DC76D",
+        recurring: false,
       });
 
-      showSuccess(`Transferred ${format(parsed)} from ${from.name} to ${to.name}`);
+      await updateAccount(fromId, { balance: from.balance - parsed });
+      await updateAccount(toId, { balance: to.balance + parsed });
+
+      showSuccess(
+        `Transferred ${format(parsed)} from ${from.name} to ${to.name}`,
+      );
       router.back();
     } catch {
-      showError('Transfer failed. Check your connection and try again.');
+      showError("Transfer failed. Check your connection and try again.");
     }
   }
 
   return (
     <ThemedScreen modal>
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: theme.card, borderBottomColor: theme.border },
+          ]}
+        >
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="close" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.text }]}>Transfer Money</Text>
+          <Text style={[styles.title, { color: theme.text }]}>
+            Transfer Money
+          </Text>
           <TouchableOpacity onPress={handleTransfer}>
             <Text style={styles.saveBtn}>Transfer</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Amount */}
           <View style={styles.amountRow}>
-            <Text style={[styles.currency, { color: theme.textSecondary }]}>{currencySymbol}</Text>
+            <Text style={[styles.currency, { color: theme.textSecondary }]}>
+              {currencySymbol}
+            </Text>
             <TextInput
               style={[styles.amountInput, { color: theme.text }]}
               value={amount}
@@ -95,19 +144,43 @@ export default function TransferModal() {
 
           {/* From */}
           <View style={styles.field}>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>From Account</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>
+              From Account
+            </Text>
             <View style={styles.accountList}>
               {accounts.map((acc) => (
                 <TouchableOpacity
                   key={acc.id}
-                  style={[styles.accountRow, { backgroundColor: theme.card, borderColor: theme.border }, fromId === acc.id && styles.accountRowActive]}
-                  onPress={() => setFromId(acc.id)}>
-                  <View style={[styles.accountDot, { backgroundColor: acc.color }]} />
+                  style={[
+                    styles.accountRow,
+                    { backgroundColor: theme.card, borderColor: theme.border },
+                    fromId === acc.id && styles.accountRowActive,
+                  ]}
+                  onPress={() => setFromId(acc.id)}
+                >
+                  <View
+                    style={[styles.accountDot, { backgroundColor: acc.color }]}
+                  />
                   <View style={styles.accountInfo}>
-                    <Text style={[styles.accountName, { color: theme.text }]}>{acc.name}</Text>
-                    <Text style={[styles.accountBalance, { color: theme.textSecondary }]}>{format(acc.balance)}</Text>
+                    <Text style={[styles.accountName, { color: theme.text }]}>
+                      {acc.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.accountBalance,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {format(acc.balance)}
+                    </Text>
                   </View>
-                  {fromId === acc.id && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+                  {fromId === acc.id && (
+                    <Ionicons
+                      name="checkmark"
+                      size={18}
+                      color={Colors.primary}
+                    />
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -119,21 +192,53 @@ export default function TransferModal() {
 
           {/* To */}
           <View style={styles.field}>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>To Account</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>
+              To Account
+            </Text>
             <View style={styles.accountList}>
-              {accounts.filter((a) => a.id !== fromId).map((acc) => (
-                <TouchableOpacity
-                  key={acc.id}
-                  style={[styles.accountRow, { backgroundColor: theme.card, borderColor: theme.border }, toId === acc.id && styles.accountRowActive]}
-                  onPress={() => setToId(acc.id)}>
-                  <View style={[styles.accountDot, { backgroundColor: acc.color }]} />
-                  <View style={styles.accountInfo}>
-                    <Text style={[styles.accountName, { color: theme.text }]}>{acc.name}</Text>
-                    <Text style={[styles.accountBalance, { color: theme.textSecondary }]}>{format(acc.balance)}</Text>
-                  </View>
-                  {toId === acc.id && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
-                </TouchableOpacity>
-              ))}
+              {accounts
+                .filter((a) => a.id !== fromId)
+                .map((acc) => (
+                  <TouchableOpacity
+                    key={acc.id}
+                    style={[
+                      styles.accountRow,
+                      {
+                        backgroundColor: theme.card,
+                        borderColor: theme.border,
+                      },
+                      toId === acc.id && styles.accountRowActive,
+                    ]}
+                    onPress={() => setToId(acc.id)}
+                  >
+                    <View
+                      style={[
+                        styles.accountDot,
+                        { backgroundColor: acc.color },
+                      ]}
+                    />
+                    <View style={styles.accountInfo}>
+                      <Text style={[styles.accountName, { color: theme.text }]}>
+                        {acc.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.accountBalance,
+                          { color: theme.textSecondary },
+                        ]}
+                      >
+                        {format(acc.balance)}
+                      </Text>
+                    </View>
+                    {toId === acc.id && (
+                      <Ionicons
+                        name="checkmark"
+                        size={18}
+                        color={Colors.primary}
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
             </View>
           </View>
         </ScrollView>
@@ -144,21 +249,58 @@ export default function TransferModal() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  title: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
-  saveBtn: { fontSize: 16, fontWeight: '700', color: Colors.primary },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    backgroundColor: Colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  title: { fontSize: 16, fontWeight: "700", color: Colors.textPrimary },
+  saveBtn: { fontSize: 16, fontWeight: "700", color: Colors.primary },
   content: { padding: Spacing.three, gap: Spacing.three },
-  amountRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.four },
-  currency: { fontSize: 32, fontWeight: '300', color: Colors.textSecondary, marginRight: Spacing.one },
-  amountInput: { fontSize: 48, fontWeight: '700', color: Colors.textPrimary, minWidth: 100, textAlign: 'center' },
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.four,
+  },
+  currency: {
+    fontSize: 32,
+    fontWeight: "300",
+    color: Colors.textSecondary,
+    marginRight: Spacing.one,
+  },
+  amountInput: {
+    fontSize: 48,
+    fontWeight: "700",
+    color: Colors.textPrimary,
+    minWidth: 100,
+    textAlign: "center",
+  },
   field: { gap: Spacing.two },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+  label: { fontSize: 13, fontWeight: "600", color: Colors.textSecondary },
   accountList: { gap: Spacing.two },
-  accountRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, backgroundColor: Colors.white, borderRadius: BorderRadius.md, padding: Spacing.two + 2, borderWidth: 1, borderColor: Colors.border },
-  accountRowActive: { borderColor: Colors.primary, backgroundColor: Colors.primary + '08' },
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.two + 2,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  accountRowActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "08",
+  },
   accountDot: { width: 12, height: 12, borderRadius: 6 },
   accountInfo: { flex: 1 },
-  accountName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  accountName: { fontSize: 14, fontWeight: "600", color: Colors.textPrimary },
   accountBalance: { fontSize: 12, color: Colors.textSecondary },
-  arrowRow: { alignItems: 'center' },
+  arrowRow: { alignItems: "center" },
 });

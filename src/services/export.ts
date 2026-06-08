@@ -1,14 +1,9 @@
-import {
-  documentDirectory,
-  writeAsStringAsync,
-  readAsStringAsync,
-  moveAsync,
-} from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
-import * as Print from 'expo-print';
-import { Transaction } from '../types';
-import { formatDate } from '../utils/formatDate';
-import { formatCurrency } from '../utils/formatCurrency';
+import * as FileSystem from "expo-file-system";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import { Transaction } from "../types";
+import { formatCurrency } from "../utils/formatCurrency";
+import { formatDate } from "../utils/formatDate";
 
 function csvField(val: string): string {
   return `"${val.replaceAll('"', '""')}"`;
@@ -17,16 +12,18 @@ function csvField(val: string): string {
 // RFC 4180-compliant CSV row parser — handles quoted fields with embedded commas/newlines
 function parseCSVRow(line: string): string[] {
   const cols: string[] = [];
-  let cur = '';
+  let cur = "";
   let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else inQuotes = !inQuotes;
+    } else if (ch === "," && !inQuotes) {
       cols.push(cur.trim());
-      cur = '';
+      cur = "";
     } else {
       cur += ch;
     }
@@ -37,8 +34,11 @@ function parseCSVRow(line: string): string[] {
 
 // ─── CSV export ───────────────────────────────────────────────────────────────
 
-export async function exportToCSV(transactions: Transaction[], filename = 'transactions'): Promise<void> {
-  const header = 'Date,Type,Category,Account,Amount,Note,Tags\n';
+export async function exportToCSV(
+  transactions: Transaction[],
+  filename = "transactions",
+): Promise<void> {
+  const header = "Date,Type,Category,Account,Amount,Note,Tags\n";
   const rows = transactions.map((tx) =>
     [
       csvField(formatDate(tx.date)),
@@ -47,12 +47,15 @@ export async function exportToCSV(transactions: Transaction[], filename = 'trans
       csvField(tx.accountId),
       tx.amount.toFixed(2),
       csvField(tx.note),
-      csvField(tx.tags.join(';')),
-    ].join(','),
+      csvField(tx.tags.join(";")),
+    ].join(","),
   );
-  const path = `${documentDirectory}${filename}.csv`;
-  await writeAsStringAsync(path, header + rows.join('\n'));
-  await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: 'Export Transactions' });
+  const path = `${FileSystem.documentDirectory}${filename}.csv`;
+  await FileSystem.writeAsStringAsync(path, header + rows.join("\n"));
+  await Sharing.shareAsync(path, {
+    mimeType: "text/csv",
+    dialogTitle: "Export Transactions",
+  });
 }
 
 // ─── PDF export ───────────────────────────────────────────────────────────────
@@ -69,13 +72,13 @@ export async function exportToPDF(
         <td>${formatDate(tx.date)}</td>
         <td>${tx.merchant}</td>
         <td>${tx.category}</td>
-        <td style="color:${tx.type === 'income' ? '#2DC76D' : '#FF4B4B'};font-weight:600">
-          ${tx.type === 'income' ? '+' : '-'}${formatCurrency(Math.abs(tx.amount))}
+        <td style="color:${tx.type === "income" ? "#2DC76D" : "#FF4B4B"};font-weight:600">
+          ${tx.type === "income" ? "+" : "-"}${formatCurrency(Math.abs(tx.amount))}
         </td>
         <td>${tx.note}</td>
       </tr>`,
     )
-    .join('');
+    .join("");
 
   const html = `<!DOCTYPE html>
 <html>
@@ -114,17 +117,26 @@ export async function exportToPDF(
 </html>`;
 
   const { uri } = await Print.printToFileAsync({ html });
-  const dest = `${documentDirectory}statement-${monthLabel.replaceAll(' ', '-')}.pdf`;
-  await moveAsync({ from: uri, to: dest });
-  await Sharing.shareAsync(dest, { mimeType: 'application/pdf', dialogTitle: 'Export PDF Statement' });
+  const dest = `${FileSystem.documentDirectory}statement-${monthLabel.replaceAll(" ", "-")}.pdf`;
+  await FileSystem.moveAsync({ from: uri, to: dest });
+  await Sharing.shareAsync(dest, {
+    mimeType: "application/pdf",
+    dialogTitle: "Export PDF Statement",
+  });
 }
 
 // ─── JSON backup ──────────────────────────────────────────────────────────────
 
-export async function exportAllDataJSON(data: object, filename = 'financeflow-backup'): Promise<void> {
-  const path = `${documentDirectory}${filename}.json`;
-  await writeAsStringAsync(path, JSON.stringify(data, null, 2));
-  await Sharing.shareAsync(path, { mimeType: 'application/json', dialogTitle: 'Export Backup' });
+export async function exportAllDataJSON(
+  data: object,
+  filename = "financeflow-backup",
+): Promise<void> {
+  const path = `${FileSystem.documentDirectory}${filename}.json`;
+  await FileSystem.writeAsStringAsync(path, JSON.stringify(data, null, 2));
+  await Sharing.shareAsync(path, {
+    mimeType: "application/json",
+    dialogTitle: "Export Backup",
+  });
 }
 
 // ─── CSV import (bank statement) ──────────────────────────────────────────────
@@ -132,7 +144,7 @@ export async function exportAllDataJSON(data: object, filename = 'financeflow-ba
 export interface ImportedTransaction {
   merchant: string;
   amount: number;
-  type: 'income' | 'expense';
+  type: "income" | "expense";
   category: string;
   categoryId: string;
   date: string;
@@ -144,33 +156,64 @@ export interface ImportedTransaction {
   recurring: false;
 }
 
-export async function importFromCSV(uri: string): Promise<ImportedTransaction[]> {
-  const raw = await readAsStringAsync(uri);
+export async function importFromCSV(
+  uri: string,
+): Promise<ImportedTransaction[]> {
+  const raw = await FileSystem.readAsStringAsync(uri);
   if (!raw) return [];
-  const lines = raw.trim().split('\n');
+  const lines = raw.trim().split("\n");
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h: string) => h.trim().toLowerCase());
+  const headers = lines[0]
+    .split(",")
+    .map((h: string) => h.trim().toLowerCase());
+  const hasTypeCol =
+    headers.includes("type") || headers.includes("transaction_type");
 
   return lines.slice(1).flatMap((line) => {
     if (!line.trim()) return [];
     const cols = parseCSVRow(line);
     const row: Record<string, string> = {};
-    headers.forEach((h: string, i: number) => { row[h] = (cols[i] ?? '').trim(); });
-    const amount = Number.parseFloat(row.amount ?? '0');
+    headers.forEach((h: string, i: number) => {
+      row[h] = (cols[i] ?? "").trim();
+    });
+    const amount = Number.parseFloat(row.amount ?? "0");
     if (Number.isNaN(amount)) return [];
-    return [{
-      merchant: row.description ?? row.merchant ?? 'Imported',
-      amount,
-      type: amount >= 0 ? 'income' : 'expense',
-      category: row.category ?? 'Other',
-      categoryId: (row.category ?? 'other').toLowerCase().replaceAll(/\s+/g, '_'),
-      date: row.date ?? new Date().toISOString().split('T')[0],
-      note: row.note ?? '',
-      tags: [],
-      accountId: '',
-      icon: '📥',
-      iconBg: '#7C6FFF',
-      recurring: false as const,
-    }];
+
+    // Determine type: prefer CSV column, fall back to sign heuristic
+    const typeCol = row.type ?? row.transaction_type ?? "";
+    let type: "income" | "expense";
+    if (
+      typeCol.toLowerCase() === "income" ||
+      typeCol.toLowerCase() === "credit" ||
+      typeCol.toLowerCase() === "deposit"
+    ) {
+      type = "income";
+    } else if (
+      typeCol.toLowerCase() === "expense" ||
+      typeCol.toLowerCase() === "debit" ||
+      typeCol.toLowerCase() === "withdrawal"
+    ) {
+      type = "expense";
+    } else {
+      type = amount >= 0 ? "income" : "expense";
+    }
+    return [
+      {
+        merchant: row.description ?? row.merchant ?? "Imported",
+        amount: Math.abs(amount),
+        type,
+        category: row.category ?? "Other",
+        categoryId: (row.category ?? "other")
+          .toLowerCase()
+          .replaceAll(/\s+/g, "_"),
+        date: row.date ?? new Date().toISOString().split("T")[0],
+        note: row.note ?? "",
+        tags: [],
+        accountId: "",
+        icon: "📥",
+        iconBg: "#7C6FFF",
+        recurring: false as const,
+      },
+    ];
   });
 }

@@ -1,18 +1,17 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import { BorderRadius, Colors, Spacing } from "@/constants/theme";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useAccountStore } from "@/store/accountStore";
 import { useCategoryStore } from "@/store/categoryStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useTransactionStore } from "@/store/transactionStore";
-import { getCurrencySymbol, LOCALE_MAP } from "@/utils/formatCurrency";
 import { RecurrenceFrequency, TransactionType } from "@/types";
+import { getCurrencySymbol, LOCALE_MAP } from "@/utils/formatCurrency";
 import { todayStr } from "@/utils/formatDate";
 import { getSafeIoniconName } from "@/utils/icon";
+import { showError } from "@/utils/toast";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
-import { showError } from "@/utils/toast";
 import {
     KeyboardAvoidingView,
     Modal,
@@ -25,11 +24,30 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAYS_LABEL = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const DAYS_LABEL = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-function CustomDatePicker({ visible, value, onConfirm, onClose }: {
+function CustomDatePicker({
+  visible,
+  value,
+  onConfirm,
+  onClose,
+}: {
   visible: boolean;
   value: string;
   onConfirm: (date: string) => void;
@@ -37,31 +55,47 @@ function CustomDatePicker({ visible, value, onConfirm, onClose }: {
 }) {
   const theme = useThemeColors();
   const parsed = new Date(value);
-  const initYear  = isNaN(parsed.getTime()) ? new Date().getFullYear() : parsed.getFullYear();
-  const initMonth = isNaN(parsed.getTime()) ? new Date().getMonth()    : parsed.getMonth();
-  const initDay   = isNaN(parsed.getTime()) ? new Date().getDate()     : parsed.getDate();
+  const initYear = isNaN(parsed.getTime())
+    ? new Date().getFullYear()
+    : parsed.getFullYear();
+  const initMonth = isNaN(parsed.getTime())
+    ? new Date().getMonth()
+    : parsed.getMonth();
+  const initDay = isNaN(parsed.getTime())
+    ? new Date().getDate()
+    : parsed.getDate();
 
-  const [year, setYear]   = useState(initYear);
+  const [year, setYear] = useState(initYear);
   const [month, setMonth] = useState(initMonth);
-  const [day, setDay]     = useState(initDay);
+  const [day, setDay] = useState(initDay);
 
-  const daysInMonth = useMemo(() => new Date(year, month + 1, 0).getDate(), [year, month]);
-  const firstDayOfWeek = useMemo(() => new Date(year, month, 1).getDay(), [year, month]);
+  const daysInMonth = useMemo(
+    () => new Date(year, month + 1, 0).getDate(),
+    [year, month],
+  );
+  const firstDayOfWeek = useMemo(
+    () => new Date(year, month, 1).getDay(),
+    [year, month],
+  );
 
   function prevMonth() {
-    if (month === 0) { setMonth(11); setYear((y) => y - 1); }
-    else setMonth((m) => m - 1);
+    if (month === 0) {
+      setMonth(11);
+      setYear((y) => y - 1);
+    } else setMonth((m) => m - 1);
     setDay(1);
   }
   function nextMonth() {
-    if (month === 11) { setMonth(0); setYear((y) => y + 1); }
-    else setMonth((m) => m + 1);
+    if (month === 11) {
+      setMonth(0);
+      setYear((y) => y + 1);
+    } else setMonth((m) => m + 1);
     setDay(1);
   }
 
   function confirm() {
-    const mm = String(month + 1).padStart(2, '0');
-    const dd = String(day).padStart(2, '0');
+    const mm = String(month + 1).padStart(2, "0");
+    const dd = String(day).padStart(2, "0");
     onConfirm(`${year}-${mm}-${dd}`);
   }
 
@@ -71,7 +105,12 @@ function CustomDatePicker({ visible, value, onConfirm, onClose }: {
   ];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={dp.overlay}>
         <View style={[dp.card, { backgroundColor: theme.card }]}>
           {/* Month/Year nav */}
@@ -83,14 +122,23 @@ function CustomDatePicker({ visible, value, onConfirm, onClose }: {
               {MONTHS[month]} {year}
             </Text>
             <TouchableOpacity onPress={nextMonth} style={dp.navBtn}>
-              <Ionicons name="chevron-forward" size={20} color={theme.primary} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.primary}
+              />
             </TouchableOpacity>
           </View>
 
           {/* Day-of-week headers */}
           <View style={dp.weekRow}>
             {DAYS_LABEL.map((d) => (
-              <Text key={d} style={[dp.weekLabel, { color: theme.textSecondary }]}>{d}</Text>
+              <Text
+                key={d}
+                style={[dp.weekLabel, { color: theme.textSecondary }]}
+              >
+                {d}
+              </Text>
             ))}
           </View>
 
@@ -106,8 +154,20 @@ function CustomDatePicker({ visible, value, onConfirm, onClose }: {
                   disabled={!d}
                 >
                   {d !== null && (
-                    <View style={[dp.cellInner, active && { backgroundColor: theme.primary }]}>
-                      <Text style={[dp.cellText, { color: active ? '#fff' : theme.text }]}>{d}</Text>
+                    <View
+                      style={[
+                        dp.cellInner,
+                        active && { backgroundColor: theme.primary },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          dp.cellText,
+                          { color: active ? "#fff" : theme.text },
+                        ]}
+                      >
+                        {d}
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -117,11 +177,22 @@ function CustomDatePicker({ visible, value, onConfirm, onClose }: {
 
           {/* Actions */}
           <View style={dp.actions}>
-            <TouchableOpacity style={[dp.actionBtn, { borderColor: theme.border }]} onPress={onClose}>
-              <Text style={[dp.actionText, { color: theme.textSecondary }]}>Cancel</Text>
+            <TouchableOpacity
+              style={[dp.actionBtn, { borderColor: theme.border }]}
+              onPress={onClose}
+            >
+              <Text style={[dp.actionText, { color: theme.textSecondary }]}>
+                Cancel
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[dp.actionBtn, { backgroundColor: theme.primary, borderColor: theme.primary }]} onPress={confirm}>
-              <Text style={[dp.actionText, { color: '#fff' }]}>Confirm</Text>
+            <TouchableOpacity
+              style={[
+                dp.actionBtn,
+                { backgroundColor: theme.primary, borderColor: theme.primary },
+              ]}
+              onPress={confirm}
+            >
+              <Text style={[dp.actionText, { color: "#fff" }]}>Confirm</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -131,20 +202,59 @@ function CustomDatePicker({ visible, value, onConfirm, onClose }: {
 }
 
 const dp = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: Spacing.four },
-  card: { width: '100%', borderRadius: BorderRadius.xl, padding: Spacing.three, gap: Spacing.two },
-  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.one },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.four,
+  },
+  card: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  navRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.one,
+  },
   navBtn: { padding: Spacing.two },
-  navTitle: { fontSize: 16, fontWeight: '700' },
-  weekRow: { flexDirection: 'row' },
-  weekLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', paddingVertical: Spacing.one },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center' },
-  cellInner: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  cellText: { fontSize: 14, fontWeight: '500' },
-  actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
-  actionBtn: { flex: 1, borderWidth: 1, borderRadius: BorderRadius.md, paddingVertical: Spacing.two + 2, alignItems: 'center' },
-  actionText: { fontSize: 15, fontWeight: '600' },
+  navTitle: { fontSize: 16, fontWeight: "700" },
+  weekRow: { flexDirection: "row" },
+  weekLabel: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 11,
+    fontWeight: "600",
+    paddingVertical: Spacing.one,
+  },
+  grid: { flexDirection: "row", flexWrap: "wrap" },
+  cell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cellInner: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cellText: { fontSize: 14, fontWeight: "500" },
+  actions: { flexDirection: "row", gap: Spacing.two, marginTop: Spacing.one },
+  actionBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.two + 2,
+    alignItems: "center",
+  },
+  actionText: { fontSize: 15, fontWeight: "600" },
 });
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
@@ -156,8 +266,6 @@ const FREQUENCIES: { value: RecurrenceFrequency; label: string }[] = [
   { value: "yearly", label: "Yearly" },
 ];
 
-
-
 export default function AddTransactionModal() {
   const theme = useThemeColors();
   const { currency } = useSettingsStore();
@@ -166,7 +274,7 @@ export default function AddTransactionModal() {
   const { transactions, addTransaction, updateTransaction } =
     useTransactionStore();
   const { categories } = useCategoryStore();
-  const { accounts } = useAccountStore();
+  const { accounts, updateAccount } = useAccountStore();
 
   const existing = txId ? transactions.find((t) => t.id === txId) : undefined;
 
@@ -177,21 +285,24 @@ export default function AddTransactionModal() {
   const [rawAmount, setRawAmount] = useState(
     existing ? Math.abs(existing.amount).toString() : "",
   );
-  const locale = LOCALE_MAP[currency] ?? 'en-US';
+  const locale = LOCALE_MAP[currency] ?? "en-US";
   const displayAmount = rawAmount
     ? new Intl.NumberFormat(locale).format(Number(rawAmount))
-    : '';
-  const amountFontSize = Math.max(22, 48 - Math.max(0, displayAmount.length - 5) * 3);
+    : "";
+  const amountFontSize = Math.max(
+    22,
+    48 - Math.max(0, displayAmount.length - 5) * 3,
+  );
   function handleAmountChange(text: string) {
-    setRawAmount(text.replace(/[^0-9]/g, ''));
+    setRawAmount(text.replace(/[^0-9]/g, ""));
   }
   const [note, setNote] = useState(existing?.note ?? "");
   const [merchant, setMerchant] = useState(existing?.merchant ?? "");
   const [selectedCat, setSelectedCat] = useState(
-    existing?.categoryId ?? categories.find((c) => !c.archived)?.id ?? '',
+    existing?.categoryId ?? categories.find((c) => !c.archived)?.id ?? "",
   );
   const [selectedAccount, setSelectedAccount] = useState(
-    existing?.accountId ?? accounts[0]?.id ?? '',
+    existing?.accountId ?? accounts[0]?.id ?? "",
   );
   const [date, setDate] = useState(existing?.date ?? todayStr());
   const [tags, setTags] = useState((existing?.tags ?? []).join(", "));
@@ -265,6 +376,13 @@ export default function AddTransactionModal() {
           recurring,
           recurrence,
         });
+
+        const account = accounts.find((a) => a.id === selectedAccount);
+        if (account) {
+          await updateAccount(selectedAccount, {
+            balance: account.balance + (type === "expense" ? -parsed : parsed),
+          });
+        }
       }
       router.back();
     } catch {
@@ -277,7 +395,10 @@ export default function AddTransactionModal() {
       style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
+      <SafeAreaView
+        style={[styles.safe, { backgroundColor: theme.background }]}
+        edges={["top", "bottom"]}
+      >
         {/* Header */}
         <View
           style={[
@@ -350,7 +471,10 @@ export default function AddTransactionModal() {
               {currencySymbol}
             </Text>
             <TextInput
-              style={[styles.amountInput, { color: theme.text, fontSize: amountFontSize }]}
+              style={[
+                styles.amountInput,
+                { color: theme.text, fontSize: amountFontSize },
+              ]}
               value={displayAmount}
               onChangeText={handleAmountChange}
               placeholder="0"
@@ -402,8 +526,13 @@ export default function AddTransactionModal() {
                   color={Colors.primary}
                 />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.dateDisplay} onPress={() => setShowDatePicker(true)}>
-                <Text style={[styles.dateInput, { color: theme.text }]}>{date}</Text>
+              <TouchableOpacity
+                style={styles.dateDisplay}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={[styles.dateInput, { color: theme.text }]}>
+                  {date}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => adjustDate(1)}
@@ -604,9 +733,13 @@ export default function AddTransactionModal() {
         </ScrollView>
 
         <CustomDatePicker
+          key={date}
           visible={showDatePicker}
           value={date}
-          onConfirm={(d) => { setDate(d); setShowDatePicker(false); }}
+          onConfirm={(d) => {
+            setDate(d);
+            setShowDatePicker(false);
+          }}
           onClose={() => setShowDatePicker(false)}
         />
       </SafeAreaView>
@@ -690,7 +823,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two + 2,
     paddingVertical: Spacing.two + 4,
   },
-  dateDisplay: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  dateDisplay: { flex: 1, alignItems: "center", justifyContent: "center" },
   dateInput: {
     fontSize: 15,
     textAlign: "center",

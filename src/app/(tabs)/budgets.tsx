@@ -1,4 +1,6 @@
-﻿import BudgetProgressCard from "@/components/BudgetProgressCard";
+﻿﻿import { showConfirm } from "@/components/AppDialog";
+import BudgetProgressCard from "@/components/BudgetProgressCard";
+import SwipeableRow from "@/components/SwipeableRow";
 import ThemedScreen from "@/components/ThemedScreen";
 import { BorderRadius, Colors, Spacing } from "@/constants/theme";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -8,91 +10,28 @@ import { useCategoryStore } from "@/store/categoryStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useTransactionStore } from "@/store/transactionStore";
 import {
-  getBudgetStatus,
-  getCategoryBudgetPct,
-  getRolloverAmount,
+    getBudgetStatus,
+    getCategoryBudgetPct,
+    getRolloverAmount,
 } from "@/utils/calculateBudget";
 import { prevMonth } from "@/utils/formatDate";
 import { getSafeIoniconName } from "@/utils/icon";
 import { Ionicons } from "@expo/vector-icons";
-import { showConfirm } from "@/components/AppDialog";
 import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Animated,
-  Modal,
-  PanResponder,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
 const SWIPE_THRESHOLD = 72;
-
-function SwipeableBudgetCard({
-  children,
-  onEdit,
-  onDelete,
-}: Readonly<{ children: React.ReactNode; onEdit: () => void; onDelete: () => void }>) {
-  const theme = useThemeColors();
-  const translateX = useRef(new Animated.Value(0)).current;
-
-  const pan = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, { dx, dy }) =>
-        Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8,
-      onPanResponderMove: (_, { dx }) =>
-        translateX.setValue(Math.max(-110, Math.min(110, dx))),
-      onPanResponderRelease: (_, { dx }) => {
-        if (dx < -SWIPE_THRESHOLD) {
-          Animated.timing(translateX, { toValue: -500, duration: 200, useNativeDriver: true }).start(() => {
-            translateX.setValue(0);
-            onDelete();
-          });
-        } else if (dx > SWIPE_THRESHOLD) {
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start(() => onEdit());
-        } else {
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
-
-  return (
-    <View style={swipe.container}>
-      <View style={swipe.leftAction}>
-        <Ionicons name="pencil" size={18} color="#fff" />
-        <Text style={swipe.label}>Edit</Text>
-      </View>
-      <View style={swipe.rightAction}>
-        <Ionicons name="trash" size={18} color="#fff" />
-        <Text style={swipe.label}>Delete</Text>
-      </View>
-      <Animated.View style={{ transform: [{ translateX }], backgroundColor: theme.card }} {...pan.panHandlers}>
-        {children}
-      </Animated.View>
-    </View>
-  );
-}
-
-const swipe = StyleSheet.create({
-  container: { position: "relative", overflow: "hidden", borderRadius: BorderRadius.lg },
-  leftAction: {
-    position: "absolute", left: 0, top: 0, bottom: 0, width: 80,
-    backgroundColor: Colors.primary, alignItems: "center", justifyContent: "center", gap: 4,
-  },
-  rightAction: {
-    position: "absolute", right: 0, top: 0, bottom: 0, width: 80,
-    backgroundColor: Colors.danger, alignItems: "center", justifyContent: "center", gap: 4,
-  },
-  label: { color: "#fff", fontSize: 11, fontWeight: "700" },
-});
 
 export default function BudgetsScreen() {
   const { categories, archiveCategory } = useCategoryStore();
@@ -107,7 +46,10 @@ export default function BudgetsScreen() {
 
   const totalSpent = getTotalByType("expense", selectedMonth);
   const prevYM = prevMonth(selectedMonth);
-  const totalPct = totalMonthlyBudget > 0 ? Math.min((totalSpent / totalMonthlyBudget) * 100, 100) : 0;
+  const totalPct =
+    totalMonthlyBudget > 0
+      ? Math.min((totalSpent / totalMonthlyBudget) * 100, 100)
+      : 0;
   const status = getBudgetStatus(totalPct);
 
   let statusColor: string = Colors.success;
@@ -115,13 +57,22 @@ export default function BudgetsScreen() {
   else if (status === "warning") statusColor = Colors.secondary;
 
   const { updateCategory } = useCategoryStore();
-  const activeCategories = categories.filter(
-    (c) => !c.archived && c.monthlyLimit !== null,
+  const activeCategories = useMemo(
+    () => categories.filter((c) => !c.archived && c.monthlyLimit !== null),
+    [categories],
   );
 
-  const [editModal, setEditModal] = useState<{ catId: string; catName: string; value: string } | null>(null);
+  const [editModal, setEditModal] = useState<{
+    catId: string;
+    catName: string;
+    value: string;
+  } | null>(null);
 
-  function handleEditLimit(catId: string, catName: string, currentLimit: number) {
+  function handleEditLimit(
+    catId: string,
+    catName: string,
+    currentLimit: number,
+  ) {
     setEditModal({ catId, catName, value: currentLimit.toString() });
   }
 
@@ -150,24 +101,54 @@ export default function BudgetsScreen() {
   return (
     <ThemedScreen>
       {/* Edit budget limit modal */}
-      <Modal visible={editModal !== null} transparent animationType="fade" onRequestClose={() => setEditModal(null)}>
+      <Modal
+        visible={editModal !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditModal(null)}
+      >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Edit Budget Limit</Text>
-            <Text style={[styles.modalSub, { color: theme.textSecondary }]}>Monthly limit for {editModal?.catName}</Text>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              Edit Budget Limit
+            </Text>
+            <Text style={[styles.modalSub, { color: theme.textSecondary }]}>
+              Monthly limit for {editModal?.catName}
+            </Text>
             <TextInput
-              style={[styles.modalInput, { backgroundColor: theme.input, color: theme.text, borderColor: theme.border }]}
-              value={editModal?.value ?? ''}
-              onChangeText={(v) => setEditModal((m) => m ? { ...m, value: v } : m)}
+              style={[
+                styles.modalInput,
+                {
+                  backgroundColor: theme.input,
+                  color: theme.text,
+                  borderColor: theme.border,
+                },
+              ]}
+              value={editModal?.value ?? ""}
+              onChangeText={(v) =>
+                setEditModal((m) => (m ? { ...m, value: v } : m))
+              }
               keyboardType="decimal-pad"
               autoFocus
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalBtn, { borderColor: theme.border }]} onPress={() => setEditModal(null)}>
-                <Text style={[styles.modalBtnText, { color: theme.textSecondary }]}>Cancel</Text>
+              <TouchableOpacity
+                style={[styles.modalBtn, { borderColor: theme.border }]}
+                onPress={() => setEditModal(null)}
+              >
+                <Text
+                  style={[styles.modalBtnText, { color: theme.textSecondary }]}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.modalBtnPrimary]} onPress={handleSaveLimit}>
-                <Text style={[styles.modalBtnText, { color: Colors.white }]}>Save</Text>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalBtnPrimary]}
+                onPress={handleSaveLimit}
+              >
+                <Text style={[styles.modalBtnText, { color: Colors.white }]}>
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -266,14 +247,16 @@ export default function BudgetsScreen() {
             Category Budgets
           </Text>
           {activeCategories.map((cat) => (
-            <SwipeableBudgetCard
+            <SwipeableRow
               key={cat.id}
-              onEdit={() => handleEditLimit(cat.id, cat.name, cat.monthlyLimit ?? 0)}
+              onEdit={() =>
+                handleEditLimit(cat.id, cat.name, cat.monthlyLimit ?? 0)
+              }
               onDelete={() =>
                 showConfirm({
-                  title: 'Remove Budget',
+                  title: "Remove Budget",
                   message: `Remove budget limit for "${cat.name}"?`,
-                  confirmLabel: 'Remove',
+                  confirmLabel: "Remove",
                   destructive: true,
                   onConfirm: () => archiveCategory(cat.id),
                 })
@@ -281,14 +264,20 @@ export default function BudgetsScreen() {
             >
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => router.push(`/(tabs)/transactions?categoryId=${cat.id}`)}
+                onPress={() =>
+                  router.push(`/(tabs)/transactions?categoryId=${cat.id}`)
+                }
               >
                 <BudgetProgressCard
                   category={cat}
-                  rolloverAmount={budgetRollover ? getRolloverAmount(cat, transactions, prevYM) : 0}
+                  rolloverAmount={
+                    budgetRollover
+                      ? getRolloverAmount(cat, transactions, prevYM)
+                      : 0
+                  }
                 />
               </TouchableOpacity>
-            </SwipeableBudgetCard>
+            </SwipeableRow>
           ))}
         </View>
 
@@ -441,13 +430,43 @@ const styles = StyleSheet.create({
   },
   uncappedNote: { fontSize: 12 },
   divider: { height: 1 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: Spacing.four },
-  modalCard: { width: '100%', borderRadius: BorderRadius.xl, padding: Spacing.four, gap: Spacing.two },
-  modalTitle: { fontSize: 17, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: Spacing.four,
+  },
+  modalCard: {
+    width: "100%",
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  modalTitle: { fontSize: 17, fontWeight: "700" },
   modalSub: { fontSize: 13 },
-  modalInput: { borderWidth: 1, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 2, fontSize: 16 },
-  modalActions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
-  modalBtn: { flex: 1, borderWidth: 1, borderRadius: BorderRadius.md, paddingVertical: Spacing.two + 2, alignItems: 'center' },
-  modalBtnPrimary: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  modalBtnText: { fontSize: 15, fontWeight: '600' },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two + 2,
+    fontSize: 16,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  modalBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.two + 2,
+    alignItems: "center",
+  },
+  modalBtnPrimary: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  modalBtnText: { fontSize: 15, fontWeight: "600" },
 });

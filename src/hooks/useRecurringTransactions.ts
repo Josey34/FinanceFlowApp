@@ -1,32 +1,47 @@
-import { useEffect } from 'react';
-import { useTransactionStore } from '../store/transactionStore';
-import { todayStr } from '../utils/formatDate';
-import { RecurrenceFrequency } from '../types';
+import { useEffect, useRef } from "react";
+import { useTransactionStore } from "../store/transactionStore";
+import { RecurrenceFrequency } from "../types";
+import { todayStr } from "../utils/formatDate";
 
 function nextOccurrence(dateStr: string, freq: RecurrenceFrequency): string {
   const d = new Date(dateStr);
   switch (freq) {
-    case 'daily':   d.setDate(d.getDate() + 1); break;
-    case 'weekly':  d.setDate(d.getDate() + 7); break;
-    case 'monthly': d.setMonth(d.getMonth() + 1); break;
-    case 'yearly':  d.setFullYear(d.getFullYear() + 1); break;
+    case "daily":
+      d.setDate(d.getDate() + 1);
+      break;
+    case "weekly":
+      d.setDate(d.getDate() + 7);
+      break;
+    case "monthly":
+      d.setMonth(d.getMonth() + 1);
+      break;
+    case "yearly":
+      d.setFullYear(d.getFullYear() + 1);
+      break;
   }
-  return d.toISOString().split('T')[0];
+  return d.toISOString().split("T")[0];
 }
 
 export function useRecurringTransactions() {
-  const { transactions, addTransaction, updateTransaction } = useTransactionStore();
+  const { transactions, addTransaction, updateTransaction } =
+    useTransactionStore();
+  const processedRef = useRef(new Set<string>());
 
   useEffect(() => {
     const today = todayStr();
     const due = transactions.filter(
-      (t) => t.recurring && t.recurrence && t.recurrence.nextDate <= today,
+      (t) =>
+        t.recurring &&
+        t.recurrence &&
+        t.recurrence.nextDate <= today &&
+        !processedRef.current.has(t.id),
     );
     if (due.length === 0) return;
 
     async function processDue() {
       for (const tx of due) {
         if (!tx.recurrence) continue;
+        processedRef.current.add(tx.id);
         await addTransaction({
           merchant: tx.merchant,
           amount: tx.amount,
@@ -44,11 +59,14 @@ export function useRecurringTransactions() {
         await updateTransaction(tx.id, {
           recurrence: {
             frequency: tx.recurrence.frequency,
-            nextDate: nextOccurrence(tx.recurrence.nextDate, tx.recurrence.frequency),
+            nextDate: nextOccurrence(
+              tx.recurrence.nextDate,
+              tx.recurrence.frequency,
+            ),
           },
         });
       }
     }
     processDue();
-  }, []);
+  }, [transactions]);
 }
