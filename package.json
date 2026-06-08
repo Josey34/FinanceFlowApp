@@ -61,6 +61,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "postinstall": "node ./scripts/patch-rn.cjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
