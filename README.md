@@ -46,6 +46,7 @@ All your data is securely stored in Firebase Firestore with real-time sync, so i
 ## Features
 
 ### 💳 Transactions
+
 - Add income and expense transactions
 - Assign categories with custom icons and colors
 - Add notes and tags to each transaction
@@ -54,18 +55,21 @@ All your data is securely stored in Firebase Firestore with real-time sync, so i
 - Search and filter by date, category, amount, or keyword
 
 ### 📂 Categories
+
 - Default categories: Food, Rent, Transport, Health, Entertainment, Shopping, Savings, Other
 - Create fully custom categories with icon and color
 - Set monthly spending limits per category
 - Archive unused categories
 
 ### 📊 Budget Management
+
 - Set a total monthly budget
 - Per-category budget limits with visual progress bars
 - Color-coded status: green (safe) → yellow (warning at 80%) → red (over budget)
 - Budget rollover option (carry unspent amounts to next month)
 
 ### 📈 Monthly Reports
+
 - Pie chart: breakdown of spending by category
 - Bar chart: month-over-month spending comparison
 - Line chart: daily spending trend within a month
@@ -74,28 +78,33 @@ All your data is securely stored in Firebase Firestore with real-time sync, so i
 - Year-at-a-glance overview
 
 ### 🎯 Savings Goals
+
 - Create named goals with a target amount and deadline
 - Allocate money toward a goal manually or automatically
 - Progress rings with estimated completion dates
 - Celebrate with animation when a goal is reached
 
 ### 🔔 Notifications & Reminders
+
 - Bill due date reminders (customizable lead time)
 - Budget overspend alerts (push notifications)
 - Weekly spending summary digest
 - Monthly report ready notification
 
 ### 🏦 Multi-Account Support
+
 - Track across Cash, Bank Account, Credit Card, Savings Account
 - Per-account balance tracking
 - Transfer money between accounts
 
 ### 📤 Data Export
+
 - Export transactions as CSV
 - Monthly PDF statement
 - Full data backup as JSON
 
 ### 🌙 UI & UX
+
 - Dark and Light mode
 - Multi-currency support with live conversion
 - Biometric lock (Face ID / Fingerprint)
@@ -105,21 +114,21 @@ All your data is securely stored in Firebase Firestore with real-time sync, so i
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Framework | React Native + Expo SDK 51 | Cross-platform iOS & Android |
-| Language | TypeScript | Type safety throughout |
-| Navigation | React Navigation v6 | Stack, Tab, Modal navigation |
-| Database | Firebase Firestore | Real-time NoSQL cloud database |
-| Auth | Firebase Authentication | Email, Google, Apple Sign-In |
-| State | Zustand | Lightweight global state |
-| Charts | react-native-gifted-charts | Bar, Line, Pie charts |
-| Notifications | Expo Notifications | Push + local notifications |
-| Storage | AsyncStorage | Offline cache |
-| UI Components | React Native Paper | Material Design components |
-| Icons | @expo/vector-icons | Icon library |
-| Currency | exchangerate-api.com | Live exchange rates (free tier) |
-| Export | expo-file-system + expo-sharing | CSV/PDF export |
+| Layer         | Technology                      | Purpose                         |
+| ------------- | ------------------------------- | ------------------------------- |
+| Framework     | React Native + Expo SDK 51      | Cross-platform iOS & Android    |
+| Language      | TypeScript                      | Type safety throughout          |
+| Navigation    | React Navigation v6             | Stack, Tab, Modal navigation    |
+| Database      | Firebase Firestore              | Real-time NoSQL cloud database  |
+| Auth          | Firebase Authentication         | Email, Google, Apple Sign-In    |
+| State         | Zustand                         | Lightweight global state        |
+| Charts        | react-native-gifted-charts      | Bar, Line, Pie charts           |
+| Notifications | Expo Notifications              | Push + local notifications      |
+| Storage       | AsyncStorage                    | Offline cache                   |
+| UI Components | React Native Paper              | Material Design components      |
+| Icons         | @expo/vector-icons              | Icon library                    |
+| Currency      | exchangerate-api.com            | Live exchange rates (free tier) |
+| Export        | expo-file-system + expo-sharing | CSV/PDF export                  |
 
 ---
 
@@ -361,9 +370,9 @@ Get a free exchange rate API key at [exchangerate-api.com](https://www.exchanger
 Then initialize Firebase in `services/firebase.ts`:
 
 ```typescript
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -512,6 +521,7 @@ users/{userId}/settings/preferences
 ## App Screens
 
 ### Dashboard
+
 - Net balance (total income − total expenses, current month)
 - Quick-add button for fast transaction entry
 - Current month summary cards (income, expenses, savings rate)
@@ -519,6 +529,7 @@ users/{userId}/settings/preferences
 - Recent transactions (last 5), tap to view all
 
 ### Transactions
+
 - Full chronological list of all transactions
 - Pull-to-refresh for latest data
 - Filter by: date range, category, type (income/expense), account
@@ -527,6 +538,7 @@ users/{userId}/settings/preferences
 - Grouped by date with daily subtotals
 
 ### Add / Edit Transaction (Modal)
+
 - Large amount input with numpad
 - Toggle: Income / Expense
 - Category picker (scrollable grid with icons)
@@ -538,6 +550,7 @@ users/{userId}/settings/preferences
 - Save / Cancel buttons
 
 ### Budgets
+
 - Total monthly budget progress bar at top
 - Per-category cards with progress bars
 - Color changes based on % used: green → yellow → red
@@ -546,6 +559,7 @@ users/{userId}/settings/preferences
 - "Add Category Budget" button
 
 ### Reports
+
 - Month selector at top (swipe or tap arrows)
 - Summary row: total income, total expenses, net
 - Pie chart: spending by category (tap slice for details)
@@ -555,6 +569,7 @@ users/{userId}/settings/preferences
 - "Export this month" button (CSV or PDF)
 
 ### Savings Goals
+
 - Goal cards in a vertical list
 - Progress ring showing % saved
 - Amount saved / target amount
@@ -563,6 +578,7 @@ users/{userId}/settings/preferences
 - Completed goals with confetti animation
 
 ### Settings
+
 - Profile (display name, avatar)
 - Default currency with live rate
 - Theme (Light / Dark / System)
@@ -641,15 +657,15 @@ interface TransactionStore {
   transactions: Transaction[];
   isLoading: boolean;
   error: string | null;
-  
+
   fetchTransactions: (userId: string) => void;
   addTransaction: (data: TransactionInput) => Promise<void>;
   updateTransaction: (id: string, data: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
-  
+
   // Computed
   getMonthlyTransactions: (year: number, month: number) => Transaction[];
-  getTotalByType: (type: 'income' | 'expense', month?: number) => number;
+  getTotalByType: (type: "income" | "expense", month?: number) => number;
   getByCategory: (categoryId: string) => Transaction[];
 }
 ```
@@ -659,10 +675,10 @@ interface TransactionStore {
 ```typescript
 interface SettingsStore {
   currency: string;
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   notifications: boolean;
   biometricLock: boolean;
-  
+
   setCurrency: (currency: string) => void;
   setTheme: (theme: string) => void;
   toggleNotifications: () => void;
@@ -680,11 +696,11 @@ We use **Expo Notifications** for all alerts.
 
 ```typescript
 // In app startup
-import * as Notifications from 'expo-notifications';
+import * as Notifications from "expo-notifications";
 
 async function registerForPushNotifications() {
   const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== 'granted') return;
+  if (status !== "granted") return;
   const token = await Notifications.getExpoPushTokenAsync();
   return token.data;
 }
@@ -692,20 +708,20 @@ async function registerForPushNotifications() {
 
 ### Notification Types
 
-| Type | Trigger | Default |
-|---|---|---|
-| Budget Warning | Category reaches 80% of limit | Enabled |
-| Budget Exceeded | Category goes over limit | Enabled |
-| Bill Reminder | X days before due date | 3 days before |
-| Weekly Digest | Every Sunday at 8 PM | Enabled |
-| Monthly Report | 1st of each month | Enabled |
+| Type            | Trigger                       | Default       |
+| --------------- | ----------------------------- | ------------- |
+| Budget Warning  | Category reaches 80% of limit | Enabled       |
+| Budget Exceeded | Category goes over limit      | Enabled       |
+| Bill Reminder   | X days before due date        | 3 days before |
+| Weekly Digest   | Every Sunday at 8 PM          | Enabled       |
+| Monthly Report  | 1st of each month             | Enabled       |
 
 ### Scheduling a Bill Reminder
 
 ```typescript
 await Notifications.scheduleNotificationAsync({
   content: {
-    title: '💳 Bill Due Soon',
+    title: "💳 Bill Due Soon",
     body: `Your ${billName} of ${amount} is due in ${daysLeft} days`,
   },
   trigger: {
@@ -724,14 +740,14 @@ Generates a `.csv` file with columns:
 `Date, Type, Category, Account, Amount, Currency, Note, Tags`
 
 ```typescript
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
-const csv = transactions.map(tx =>
-  `${tx.date},${tx.type},${tx.category},${tx.amount}`
-).join('\n');
+const csv = transactions
+  .map((tx) => `${tx.date},${tx.type},${tx.category},${tx.amount}`)
+  .join("\n");
 
-const path = FileSystem.documentDirectory + 'transactions.csv';
+const path = FileSystem.documentDirectory + "transactions.csv";
 await FileSystem.writeAsStringAsync(path, csv);
 await Sharing.shareAsync(path);
 ```
@@ -744,14 +760,14 @@ Exports all Firestore data as a single `.json` file for safekeeping or migration
 
 ## Firebase Free Tier Limits (Spark Plan)
 
-| Resource | Free Limit | Typical Usage |
-|---|---|---|
-| Firestore reads | 50,000 / day | ~500 reads/day for 1 user |
-| Firestore writes | 20,000 / day | ~50 writes/day for 1 user |
-| Firestore deletes | 20,000 / day | Rarely reached |
-| Firestore storage | 1 GB | Years of transactions |
-| Auth users | Unlimited | N/A |
-| Hosting | 10 GB / month | N/A |
+| Resource          | Free Limit    | Typical Usage             |
+| ----------------- | ------------- | ------------------------- |
+| Firestore reads   | 50,000 / day  | ~500 reads/day for 1 user |
+| Firestore writes  | 20,000 / day  | ~50 writes/day for 1 user |
+| Firestore deletes | 20,000 / day  | Rarely reached            |
+| Firestore storage | 1 GB          | Years of transactions     |
+| Auth users        | Unlimited     | N/A                       |
+| Hosting           | 10 GB / month | N/A                       |
 
 The free tier is more than sufficient for personal use and even small families.
 
@@ -760,6 +776,7 @@ The free tier is more than sufficient for personal use and even small families.
 ## Roadmap
 
 ### Phase 1 — MVP ✅
+
 - [x] Project setup with Expo + TypeScript
 - [ ] Firebase Auth (email/password)
 - [ ] Add / view / delete transactions
@@ -767,12 +784,14 @@ The free tier is more than sufficient for personal use and even small families.
 - [ ] Dashboard with balance summary
 
 ### Phase 2 — Core Features
+
 - [ ] Monthly reports with charts
 - [ ] Budget limits and progress bars
 - [ ] Recurring transactions (auto-log)
 - [ ] Dark mode
 
 ### Phase 3 — Power Features
+
 - [ ] Savings goals
 - [ ] Push notifications (budget alerts, bill reminders)
 - [ ] CSV + PDF export
@@ -780,6 +799,7 @@ The free tier is more than sufficient for personal use and even small families.
 - [ ] Multi-currency with live rates
 
 ### Phase 4 — Advanced
+
 - [ ] Google / Apple Sign-In
 - [ ] Biometric lock
 - [ ] AI spending insights (Claude API integration)
